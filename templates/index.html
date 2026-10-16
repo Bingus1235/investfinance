@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Advisor</title>
+    <meta name="description"
+        content="Premium stock analysis dashboard with real-time pricing, technical indicators, and market insights.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="nav-container">
+        <a href="/" style="text-decoration: none; color: inherit;">
+            <h1>Stock <span class="accent-text">Advisor</span></h1>
+        </a>
+
+        <label class="theme-switch" title="Toggle Light/Dark theme">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+
+    <div class="main-container">
+
+        <!-- ══════════ Watchlist Sidebar ══════════ -->
+        <div id="watchlist-bar" class="watchlist-bar card">
+            <div class="watchlist-header">
+                <h3>⭐ Watchlist</h3>
+            </div>
+            <div id="watchlist-items" class="watchlist-items">
+                <p class="watchlist-empty" id="watchlist-empty">No saved stocks yet</p>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-panel card">
+            <form id="stock-form">
+                <input type="text" id="symbol-input" placeholder="Enter Stock Symbol (e.g., AAPL)" required
+                    autocomplete="off">
+
+                <select id="period-dropdown" class="dropdown">
+                    <option value="1mo">1 Month</option>
+                    <option value="3mo">3 Months</option>
+                    <option value="6mo">6 Months</option>
+                    <option value="1y" selected>1 Year</option>
+                    <option value="5y">5 Years</option>
+                    <option value="10y">10 Years</option>
+                </select>
+
+                <button type="submit" id="search-btn">Analyze</button>
+            </form>
+            <div id="error-message" class="error-hidden"></div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="hidden">
+            <div class="spinner"></div>
+            <p>Fetching Data...</p>
+        </div>
+
+        <!-- ══════════ Results Panel ══════════ -->
+        <div id="results-panel" class="hidden">
+
+            <!-- Symbol Header -->
+            <div class="symbol-header" id="symbol-header">
+                <div class="symbol-header-left">
+                    <h2 id="symbol-name">AAPL</h2>
+                    <span class="price-large" id="price-large">$0.00</span>
+                    <span class="price-change" id="price-change">+0.00 (0.00%)</span>
+                    <button class="watchlist-btn" id="watchlist-add-btn" title="Add to Watchlist">☆</button>
+                </div>
+                <div class="symbol-header-right">
+                    <span class="company-name" id="company-name"></span>
+                    <span class="sector-badge" id="sector-badge"></span>
+                </div>
+            </div>
+
+            <!-- ── Tier 1: Core Financial Stats ── -->
+            <div class="stats-grid">
+                <div class="stat-card card">
+                    <h3>Market Cap</h3>
+                    <div class="stat-value" id="market-cap-val">-</div>
+                </div>
+                <div class="stat-card card">
+                    <h3>P/E Ratio</h3>
+                    <div class="stat-value" id="pe-ratio-val">-</div>
+                    <p class="stat-subtitle" id="forward-pe-label"></p>
+                </div>
+                <div class="stat-card card">
+                    <h3>52-Week Range</h3>
+                    <div class="stat-value" id="range-52w-val">-</div>
+                    <div class="range-bar-container">
+                        <div class="range-bar">
+                            <div class="range-bar-fill" id="range-bar-fill"></div>
+                            <div class="range-bar-marker" id="range-bar-marker"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card card">
+                    <h3>Avg Volume</h3>
+                    <div class="stat-value" id="avg-volume-val">-</div>
+                </div>
+                <div class="stat-card card">
+                    <h3>Dividend Yield</h3>
+                    <div class="stat-value" id="dividend-val">-</div>
+                </div>
+                <div class="stat-card card">
+                    <h3>Monthly Up %</h3>
+                    <div class="stat-value" id="monthly-up-val">-</div>
+                    <p class="stat-subtitle">Days closing higher (30d)</p>
+                </div>
+            </div>
+
+            <!-- ── Tier 3: Analyst Recommendation ── -->
+            <div class="analyst-section card">
+                <h3>Analyst Consensus</h3>
+                <div class="analyst-content">
+                    <div class="analyst-gauge">
+                        <div class="gauge-bar">
+                            <div class="gauge-fill" id="gauge-fill"></div>
+                            <div class="gauge-marker" id="gauge-marker"></div>
+                        </div>
+                        <div class="gauge-labels">
+                            <span>Strong Buy</span>
+                            <span>Buy</span>
+                            <span>Hold</span>
+                            <span>Sell</span>
+                            <span>Strong Sell</span>
+                        </div>
+                    </div>
+                    <div class="analyst-details">
+                        <span class="analyst-rating" id="analyst-rating">-</span>
+                        <span class="analyst-count" id="analyst-count"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Main Price Chart with Overlays ── -->
+            <div class="chart-section">
+                <div class="chart-controls card">
+                    <span class="chart-controls-label">Chart Overlays:</span>
+                    <label class="toggle-label"><input type="checkbox" id="toggle-sma50" checked> SMA 50</label>
+                    <label class="toggle-label"><input type="checkbox" id="toggle-sma200" checked> SMA 200</label>
+                    <label class="toggle-label"><input type="checkbox" id="toggle-bollinger"> Bollinger Bands</label>
+                </div>
+                <div class="chart-card card">
+                    <canvas id="stockChart"></canvas>
+                </div>
+            </div>
+
+            <!-- ── Tier 2: Technical Indicator Charts ── -->
+            <div class="indicator-section">
+                <h2 class="section-title">Technical Indicators</h2>
+                <div class="indicator-grid">
+                    <div class="indicator-card card">
+                        <h3>RSI <span class="indicator-period">(14)</span></h3>
+                        <div class="indicator-chart-container">
+                            <canvas id="rsiChart"></canvas>
+                        </div>
+                        <div class="indicator-reading" id="rsi-reading">-</div>
+                    </div>
+                    <div class="indicator-card card">
+                        <h3>MACD <span class="indicator-period">(12, 26, 9)</span></h3>
+                        <div class="indicator-chart-container">
+                            <canvas id="macdChart"></canvas>
+                        </div>
+                        <div class="indicator-reading" id="macd-reading">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Tier 3: Company Description ── -->
+            <div class="company-section card" id="company-section">
+                <h3>About <span id="about-company-name"></span></h3>
+                <p class="company-industry" id="company-industry"></p>
+                <p class="company-description" id="company-description"></p>
+            </div>
+
+            <!-- ── Tier 3: News Feed ── -->
+            <div class="news-section" id="news-section">
+                <h2 class="section-title">Latest News</h2>
+                <div class="news-grid" id="news-grid">
+                    <!-- News cards injected by JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
